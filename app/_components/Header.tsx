@@ -7,7 +7,7 @@ const Header = ({ handleSaveFlow }: { handleSaveFlow: any }) => (
     </h1>
     <button
       onClick={handleSaveFlow}
-      className="flex items-center gap-2 bg-[#F9F5F0] border-[#F4991A] px-4 hover:text-[#344F1F] hover:bg-[#F4991A68] 
+      className="flex items-center gap-2 bg-[#F9F5F0] text-gray-800 border-[#F4991A] px-4 hover:text-[#344F1F] hover:bg-[#F4991A68] 
         py-2 rounded-xl font-medium cursor-pointer shadow-lg hover:shadow-xl transition-all duration-500"
     >
       <Save size={18} />

@@ -26,7 +26,7 @@ const SettingsPanel = ({
         }}
         className="p-1 hover:scale-110 rounded transition-all duration-500 cursor-pointer"
       >
-        <ChevronLeft size={20} />
+        <ChevronLeft size={20} color="#1e2939"/>
       </button>
       <div className="flex items-center gap-2">
         <h2 className="text-md font-medium text-gray-800">Message Settings</h2>
@@ -44,7 +44,7 @@ const SettingsPanel = ({
           onChange={(e) => {
             setNodeText(e.target.value);
           }}
-          className="w-full px-3 py-2 bg-[#F9F5F0] border border-[#344F1F] rounded-lg focus:inset-ring-3 focus:inset-ring-[#F4991A]/50 focus:border-transparent 
+          className="w-full px-3 py-2 bg-[#F9F5F0] text-gray-800 border border-[#344F1F] rounded-lg focus:inset-ring-3 focus:inset-ring-[#F4991A]/50 focus:border-transparent 
             resize-none transition-all duration-500 outline-0"
           rows={4}
           placeholder="Enter message text..."

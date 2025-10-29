@@ -25,7 +25,7 @@ const TextMessageNode = ({
       />
 
       <div className="bg-[#344F1F] px-2 py-3 rounded-t-xl flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+        <div className="flex items-center gap-2 text-sm font-medium">
           <MessageCircleMore color="#F2EAD3" size={22} />
           <span className="text-[#F2EAD3]">Send Message</span>
         </div>

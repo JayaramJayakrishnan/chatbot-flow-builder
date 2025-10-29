@@ -1,65 +1,201 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import ReactFlow, {
+  addEdge,
+  Controls,
+  MiniMap,
+  useNodesState,
+  useEdgesState,
+  Node,
+  Edge,
+  Connection,
+  NodeTypes,
+} from 'reactflow';
+import 'reactflow/dist/style.css';
+
+import Header from './_components/Header';
+import TextMessageNode from './_components/TextMessageNode';
+import NodesPanel from './_components/NodesPanel'
+import SettingsPanel from './_components/SettingsPanel';
+import CustomSnackbar from './_components/Snackbar';
+
+
+const nodeTypes: NodeTypes = {
+  textMessage: TextMessageNode,
+};
+
+export default function ChatbotFlowBuilder() {
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [nodeText, setNodeText] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
+  const [showAlert, setShowAlert] = useState({show: false, message: "", status: ""})
+
+  const onConnect = useCallback(
+    (params: Connection) => {
+      // Check if source handle already has an edge
+      const sourceHasEdge = edges.some(
+        (edge) => edge.source === params.source && edge.sourceHandle === params.sourceHandle
+      );
+      
+      if (sourceHasEdge) {
+        setShowAlert({show:true, message:'A node can only have one outgoing edge from its source handle!', status: 'error'});
+        return;
+      }
+      
+      setEdges((eds) => addEdge(params, eds));
+    },
+    [edges, setEdges]
+  );
+
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+
+      const type = event.dataTransfer.getData('application/reactflow');
+      if (!type) return;
+
+      const position = {
+        x: event.clientX - 250,
+        y: event.clientY - 100,
+      };
+
+      const newNode: Node = {
+        id: `node_${Date.now()}`,
+        type: 'textMessage',
+        position,
+        data: { label: 'Text Message' },
+      };
+
+      setNodes((nds) => nds.concat(newNode));
+    },
+    [setNodes]
+  );
+
+  const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+    setSelectedNode(node);
+    setNodeText(node.data.label);
+    setShowSettings(true);
+  }, []);
+
+  const onPaneClick = useCallback(() => {
+    setSelectedNode(null);
+    setShowSettings(false);
+  }, []);
+
+  const updateNodeText = useCallback(() => {
+    if (!selectedNode) return;
+
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === selectedNode.id) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              label: nodeText,
+            },
+          };
+        }
+        return node;
+      })
+    );
+  }, [selectedNode, nodeText, setNodes]);
+
+  const handleSaveFlow = useCallback(() => {
+    // Validation: Check for nodes with empty target handles (not connected as target)
+    if (nodes.length === 0) {
+      console.log(1)
+      setShowAlert({show: true, message: 'Please add at least one node to the flow!', status: 'warning'});
+      return;
+    }
+
+    if (nodes.length > 1) {
+      const connectedTargets = new Set(edges.map((edge) => edge.target));
+      const nodesWithoutIncoming = nodes.filter(
+        (node) => !connectedTargets.has(node.id)
+      );
+
+      if (nodesWithoutIncoming.length > 1) {
+        setShowAlert({show:true, message:'Error: More than one node has empty target handles. Please connect all nodes properly!', status: 'error'});
+        return;
+      }
+    }
+
+    setShowAlert({show:true, message:'Flow saved successfully', status: 'success' });
+    console.log('Saved Flow:', { nodes, edges });
+  }, [nodes, edges]);
+
+  const onDragStart = (event: React.DragEvent, nodeType: string) => {
+    event.dataTransfer.setData('application/reactflow', nodeType);
+    event.dataTransfer.effectAllowed = 'move';
+  };
+  
+  useEffect(() => {
+    updateNodeText()
+  }, [nodeText])
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="h-screen flex flex-col bg-gray-50">      
+
+      <Header handleSaveFlow={handleSaveFlow} />
+
+      <div className="flex-1 flex">
+        {/* Main Canvas */}
+        <div className="flex-1" ref={reactFlowWrapper}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            onNodeClick={onNodeClick}
+            onPaneClick={onPaneClick}
+            nodeTypes={nodeTypes}
+            fitView
+            className="bg-[#F9F5F0]"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+            {/* <Background color="#F9F5F0" gap={16} /> */}
+            <Controls />
+            <MiniMap
+              nodeColor={() => {
+                return '#06b6d4';
+              }}
+              className="bg-white border border-gray-200"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </ReactFlow>
         </div>
-      </main>
+
+        {/* Right Sidebar - Nodes Panel or Settings */}
+        <div className="w-80 bg-[#F2EAD3] border-l border-[#F4991A68] overflow-y-auto">
+          {showSettings && selectedNode ? (
+            // Settings Panel    
+            <SettingsPanel
+              selectedNode={selectedNode}
+              nodeText={nodeText}
+              setShowSettings={setShowSettings}
+              setSelectedNode={setSelectedNode} 
+              setNodeText={setNodeText}
+              updateNodeText={updateNodeText}
+            />
+          ) : (
+            // Nodes Panel
+            <NodesPanel onDragStart={onDragStart} />
+          )}
+        </div>
+
+        <CustomSnackbar showAlert={showAlert} setShowAlert={setShowAlert} />
+      </div>
     </div>
   );
 }

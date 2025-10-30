@@ -29,6 +29,10 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Github repo
+
+This repo is hosted at: https://github.com/JayaramJayakrishnan/chatbot-flow-builder
+
 ## Public live URL
 
 Checkout the live version of this app at: https://chatbot-flow-builder-j1.vercel.app/
